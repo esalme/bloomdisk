@@ -43,9 +43,9 @@
 #define ONEMB 1048576
 
 static int bloomdisk_test_bit_set_bit(FILE *fd, uint64_t bit, int set_bit)  {
-  unsigned int byte = bit >> 3;
-  unsigned char c;
-  unsigned char mask;
+  uint64_t byte = bit >> 3;
+  uint8_t c;
+  uint8_t mask;
   fseek(fd,byte,SEEK_SET);
   fread(&c,1,1,fd);
   mask = 1 << (bit % 8);
@@ -137,8 +137,9 @@ int bloomdisk_init(struct bloomdisk * bloom, uint64_t entries, long double error
   bloom->fd_struct = fopen(bloom->filename_struct,"r+b");
 
   if(bloom->fd_struct == NULL)  { /* New File*/
-    bloom->fd_struct = fopen(bloom->filename_struct,"a+b");
-    bloom->fd_data = fopen(bloom->filename_data,"a+b");
+    bloom->fd_struct = fopen(bloom->filename_struct,"w+b");
+    bloom->fd_data = fopen(bloom->filename_data,"w+b");
+
     if(bloom->fd_struct == NULL)  {
       fprintf(stderr,"bloomdisk_init: cant open file: %s\n",bloom->filename_struct);
       return 0;
@@ -147,6 +148,7 @@ int bloomdisk_init(struct bloomdisk * bloom, uint64_t entries, long double error
       fprintf(stderr,"bloomdisk_init: cant open file: %s\n",bloom->filename_data);
       return 0;
     }
+
     buffer = malloc(ONEMB);
     if(buffer == NULL)  {
       fprintf(stderr,"bloomdisk_init: error malloc()\n");
@@ -167,7 +169,7 @@ int bloomdisk_init(struct bloomdisk * bloom, uint64_t entries, long double error
       }
       //printf("calculated bytes: %"PRIu64 "\n",bytes);
     }
-
+    fseek(bloom->fd_data,0,SEEK_SET);
     if(rwed != 1)  {
       fprintf(stderr,"bloomdisk_init: cant Initialize the file: %s\n",bloom->filename_data);
       return 0;
